@@ -123,7 +123,7 @@ src/
 ### Installation
 ```bash
 # Clone repository
-git clone <repository-url>
+git clone <[repository-url](https://github.com/Darshan-Rajanna/AutoML-Platform)>
 cd automl-platform
 
 # Create virtual environment
