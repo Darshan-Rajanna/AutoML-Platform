@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AutoML Platform</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .status-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #343a40;
+            color: white;
+            padding: 10px;
+            z-index: 1000;
+        }
+        .data-info {
+            font-family: monospace;
+            white-space: pre-wrap;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        .stat-card {
+            background: #f8f9fa;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#">AutoML Platform</a>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <!-- Project Overview Section -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0">Automated Model Selection and Hyperparameter Optimization</h4>
+                    </div>
+                    <div class="card-body">
+                        <h5>Project Overview</h5>
+                        <p>This AutoML platform automates the machine learning workflow using Bayesian Optimization for model selection and hyperparameter tuning. Key features include:</p>
+                        <ul>
+                            <li>Automated data preprocessing and feature engineering</li>
+                            <li>Intelligent model selection based on task type</li>
+                            <li>Bayesian optimization for hyperparameter tuning</li>
+                            <li>Real-time training progress monitoring</li>
+                            <li>Interactive data analysis and visualization</li>
+                            <li>Support for both classification and regression tasks</li>
+                        </ul>
+                        <div class="alert alert-info">
+                            <h6>How It Works:</h6>
+                            <ol>
+                                <li>Upload your dataset (CSV format)</li>
+                                <li>Select your target variable and task type</li>
+                                <li>The system automatically:
+                                    <ul>
+                                        <li>Preprocesses your data</li>
+                                        <li>Selects appropriate models</li>
+                                        <li>Optimizes hyperparameters using Bayesian optimization</li>
+                                        <li>Provides detailed analysis and results</li>
+                                    </ul>
+                                </li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Upload Section -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">1. Data Upload and Configuration</h5>
+                        <small class="text-muted">Upload your dataset and configure training parameters</small>
+                    </div>
+                    <div class="card-body">
+                        <form id="uploadForm" class="mb-3">
+                            <div class="mb-3">
+                                <label for="file" class="form-label">Select Dataset (CSV)</label>
+                                <div class="input-group">
+                                    <input type="file" class="form-control" id="file" accept=".csv">
+                                    <button type="submit" class="btn btn-primary">Upload</button>
+                                </div>
+                            </div>
+                        </form>
+                        
+                        <form id="configForm">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="targetColumn" class="form-label">Target Column</label>
+                                        <select class="form-select" id="targetColumn" required>
+                                            <option value="">Select target column</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="taskType" class="form-label">Task Type</label>
+                                        <select class="form-select" id="taskType" required>
+                                            <option value="classification">Classification</option>
+                                            <option value="regression">Regression</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary" id="trainButton">
+                                Start Training
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Training Progress Section -->
+        <div id="trainingProgress" class="row mb-4" style="display: none;">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">2. Training Progress</h5>
+                        <small class="text-muted">Real-time model training and optimization status</small>
+                    </div>
+                    <div class="card-body">
+                        <div class="progress">
+                            <div id="trainingProgressBar" 
+                                class="progress-bar progress-bar-striped progress-bar-animated" 
+                                role="progressbar" 
+                                style="width: 0%" 
+                                aria-valuenow="0" 
+                                aria-valuemin="0" 
+                                aria-valuemax="100">
+                                0%
+                            </div>
+                        </div>
+                        <small id="trainingStatus" class="text-muted mt-2 d-block">Initializing training...</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Analysis Section -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">3. Data Analysis</h5>
+                        <small class="text-muted">Comprehensive analysis of your dataset</small>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <!-- Basic Information -->
+                            <div class="col-md-6">
+                                <div class="card mb-3">
+                                    <div class="card-header">Basic Information</div>
+                                    <div class="card-body">
+                                        <p><strong>Target Column:</strong> <span id="targetColumnInfo">-</span></p>
+                                        <p><strong>Task Type:</strong> <span id="taskTypeInfo">-</span></p>
+                                        <p><strong>Dataset Shape:</strong> <span id="datasetShape">-</span></p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- DataFrame Information -->
+                            <div class="col-md-6">
+                                <div class="card mb-3">
+                                    <div class="card-header">DataFrame Information</div>
+                                    <div class="card-body">
+                                        <pre id="dataFrameInfo" style="max-height: 200px; overflow-y: auto;">-</pre>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Feature Information -->
+                            <div class="col-md-6">
+                                <div class="card mb-3">
+                                    <div class="card-header">Feature Information</div>
+                                    <div class="card-body">
+                                        <p><strong>Numerical Features:</strong> <span id="numFeatures">-</span></p>
+                                        <p><strong>Categorical Features:</strong> <span id="catFeatures">-</span></p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Target Distribution -->
+                            <div class="col-md-6">
+                                <div class="card mb-3">
+                                    <div class="card-header">Target Distribution</div>
+                                    <div class="card-body">
+                                        <div id="classDistChart"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Sample Data -->
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-header">Sample Data</div>
+                                    <div class="card-body">
+                                        <div id="sampleData" style="max-height: 300px; overflow-y: auto;">-</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">4. Results and Model Downloads</h5>
+                        <small class="text-muted">Model performance comparison and downloadable trained models</small>
+                    </div>
+                    <div class="card-body">
+                        <div id="resultsContainer">
+                            <div class="row">
+                                <div class="col-12 mb-4">
+                                    <div class="card">
+                                        <div class="card-header">Model Performance Comparison</div>
+                                        <div class="card-body">
+                                            <div id="modelComparison"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-12 mb-4">
+                                    <div class="card">
+                                        <div class="card-header">Optimization History</div>
+                                        <div class="card-body">
+                                            <div id="optimizationHistory"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Model Download Section -->
+                            <div id="modelDownloads" class="mt-4" style="display: none;">
+                                <h6>Download Trained Models</h6>
+                                <div class="list-group model-downloads-list">
+                                    <!-- Model download buttons will be added here dynamically -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Bar -->
+    <div class="status-bar">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8">
+                    <span id="statusMessage">Ready</span>
+                </div>
+                <div class="col-md-4 text-end">
+                    <span id="lastUpdated"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
